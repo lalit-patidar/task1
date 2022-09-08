@@ -1,5 +1,5 @@
 const express = require("express");
-const {usersGetController, usersPostController} = require("../controllers/users")
+const { usersGetController, usersPostController, userDeleteController } = require("../controllers/users")
 const multer = require("multer");
 const os = require("os")
 
@@ -20,5 +20,8 @@ const upload = multer({
 
 Routes.get("/users", usersGetController);
 Routes.post("/users", upload.single("file"), usersPostController);
+Routes.delete("/users/:email", userDeleteController);
+
+
 
 module.exports = Routes;

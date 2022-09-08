@@ -1,53 +1,62 @@
-// const { UsersServicesInstance } = require("../../services/admin/admin-credentials-services");
-// const HttpResponse = require("../../utils/httpResponse/all-http-response");
-// const traceAndThrowError = require("../../utils/errorHandling/custom-error");
+const path = require("path")
 const convertDataToJson = require("../utils/convert-csv-to-json")
 const {UploadUsersDataServicesInstance} = require("../services/users")
 const fs = require("fs")
 
 const usersGetController = async (req, res) => {
     try {
-        console.log("file,,,", req.file)
-        const userData = convertDataToJson(req.file)
-        const admin = await UploadUsersDataServicesInstance.uploadData(userData);
-        // const responseBody = HttpResponse.created(admin);
-        // res.send(responseBody);
+        const getDataFrom = req.query.from;
+        const users = await UploadUsersDataServicesInstance.getUsersInBatches(getDataFrom);
+        res.json(users)
      } catch (error) {
-        // const mappedError = traceAndThrowError(error);
-        // next(mappedError);
+        res.send({
+            sataus: 400,
+            message: "bad request"
+        })
      }
 }
 
-const path = require("path")
-let filePath = path.join(__dirname, "../incomingCsvs")
 
 const usersPostController = async (req, res) => {
     try {
-        // console.log("file,,,", req.file)
+        let filePath = path.join(__dirname, "../incomingCsvs")
         filePath = `${filePath}/${req.file.originalname}`
+        console.log("file", req.file)
          fs.writeFile(filePath, req.file.buffer, "binary", async (err) => {
             if (err) console.log(err);
             else {
                 console.log("Data saved");
                 const userData = await convertDataToJson(filePath)
-                console.log(userData, 'this is user.dat')
-
+                const serviceResponse = await UploadUsersDataServicesInstance.uploadData(userData);
+                console.log(serviceResponse, "thi sis response")
+                res.send(serviceResponse);
             }
           });
-        console.log("file,,,", "hhghghg")
-        // const serviceResponse = await UsersServicesInstance.createAdmin(userData);
-        // const responseBody = HttpResponse.created(serviceResponse);
-        // res.send(responseBody);
-        res.send("ok")
      } catch (error) {
-        // const mappedError = traceAndThrowError(error);
-        // next(mappedError);
         console.log(error, "error from post method")
-        res.send("oops")
+        res.send({
+            sataus: 400,
+            message: "bad request"
+        })
+     }
+}
+
+const userDeleteController = async (req, res) => {
+    try {
+        const deleteFrom = req.params.email;
+        console.log(deleteFrom, req.params)
+        const responseFromService = await UploadUsersDataServicesInstance.deleteUser(deleteFrom);
+        res.json(responseFromService)
+     } catch (error) {
+        res.send({
+            sataus: 400,
+            message: "bad request"
+        })
      }
 }
 
 module.exports = {
     usersGetController,
-    usersPostController
+    usersPostController,
+    userDeleteController
 }
